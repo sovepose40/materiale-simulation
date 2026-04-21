@@ -6,9 +6,9 @@ pygame.init()
 #definere variabler
 window_width = 800
 window_height = 600
-node_size = 50
+node_size = 6
 fps = 120
-grey = (29, 29, 29)
+grey = (10, 10, 10)
 light_grey = (55, 55, 55)
 clock = pygame.time.Clock()
 
@@ -28,11 +28,10 @@ class Grid:
     def draw(self,window):
         for row in range(self.rows):
             for col in range(self.cols):
-                color = light_grey
                 particle = self.nodes[row][col]
                 if particle is not None:
                     color = particle.color
-                pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, self.node_size-5, self.node_size-5))
+                    pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, self.node_size, self.node_size))
     
     def add_particle(self, row, col, particle_type):
         if 0 <= row < self.rows and 0 <= col < self.cols:
@@ -41,6 +40,22 @@ class Grid:
     def remove_particle(self, row, col):
         if 0 <= row < self.rows and 0 <= col < self.cols:
             self.nodes[row][col] = None
+    def is_node_empty(self, row, col):
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            if self.nodes[row][col] is None:
+                return True
+        return False
+    
+    def set_node(self, row, col, particle):
+        if not(0 <= row < self.rows and 0 <= col < self.cols):
+            return
+        self.nodes[row][col] = particle
+   
+    def get_node(self, row, col):
+        if (0 <= row < self.rows and 0 <= col < self.cols):
+            return self.nodes[row][col]
+        return None
+      
 
 
 class sand:
@@ -53,7 +68,17 @@ class sand:
         value = random.uniform(0.6,0.8)
         r, g, b = colorsys.hsv_to_rgb(hue, saturation, value)
         return int(r * 255), int(g * 255), int(b * 255)
-    
+    def update(self, grid, col, row):
+        if grid.is_node_empty(row + 1, col):
+            return row + 1, col
+        else:
+            offsets =[-1,1]
+            random.shuffle(offsets)
+            for offset in offsets:
+                new_col = col + offset
+                if grid.is_node_empty(row + 1, new_col):
+                    return row + 1, new_col
+        return row, col
         
 
 class Simulation:
@@ -66,6 +91,15 @@ class Simulation:
         self.grid.add_particle(row, col, sand)
     def remove_particle(self, row, col):
         self.grid.remove_particle(row, col)
+    def update(self):
+        for row in range(self.grid.rows-2, -1, -1):
+            for col in range(self.grid.cols):
+                particle = self.grid.get_node(row, col)
+                if particle is not None:
+                    new_pos = particle.update(self.grid, col, row)
+                    if new_pos != (row, col):
+                        self.grid.set_node(new_pos[0], new_pos[1], particle)
+                        self.grid.remove_particle(row, col)
 
 simulation = Simulation(window_width, window_height, node_size)
 
@@ -97,5 +131,6 @@ while True:
     simulation.draw(window)
 
     # opdaterer displayet og sætter fps
+    simulation.update()
     pygame.display.flip()
     clock.tick(fps)
