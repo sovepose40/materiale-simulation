@@ -31,7 +31,7 @@ class Grid:
                 particle = self.nodes[row][col]
                 if particle is not None:
                     color = particle.color
-                    pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, self.node_size-5, self.node_size-5))
+                    pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, self.node_size, self.node_size))
     
     def add_particle(self, row, col, particle_type):
         if 0 <= row < self.rows and 0 <= col < self.cols and self. is_node_empty(row, col):
@@ -97,6 +97,20 @@ class Simulation:
         self.mode="sand"
         self.brush_size=3
 
+    def update(self):
+        for row in range(self.grid.rows-2, -1, -1):
+            if row % 2 == 0:    
+                col_range = range(self.grid.cols)
+            else:
+                col_range = reversed(range(self.grid.cols))
+            for col in col_range:
+                particle = self.grid.get_node(row, col)
+                if isinstance(particle, sand):
+                    new_pos = particle.update(self.grid, col, row)
+                    if new_pos != (row, col):
+                        self.grid.set_node(new_pos[0], new_pos[1], particle)
+                        self.grid.remove_particle(row, col)
+
     def draw(self,window):
         self.grid.draw(window)
         self.draw_brush(window)
@@ -111,19 +125,6 @@ class Simulation:
     def remove_particle(self, row, col):
         self.grid.remove_particle(row, col)
 
-    def update(self):
-        for row in range(self.grid.rows-2, -1, -1):
-            if row % 2 == 0:    
-                col_range = range(self.grid.cols)
-            else:
-                col_range = reversed(range(self.grid.cols))
-            for col in col_range:
-                particle = self.grid.get_node(row, col)
-                if isinstance(particle, sand):
-                    new_pos = particle.update(self.grid, col, row)
-                    if new_pos != (row, col):
-                        self.grid.set_node(new_pos[0], new_pos[1], particle)
-                        self.grid.remove_particle(row, col)
     def restart(self):
         self.grid.clear()
     def handle_controls(self):
