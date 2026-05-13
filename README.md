@@ -1,5 +1,6 @@
 # materiale simulation
 Krav
+
 Skal have pygame og python installeret
 
 Brugerinteraktion
