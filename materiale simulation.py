@@ -24,7 +24,7 @@ class Grid:
         self.cols = width // node_size
         self.node_size = node_size
         self.nodes = [[None for _ in range(self.cols)] for _ in range(self.rows)]
-    
+    #tegner noderne i gitteret
     def draw(self,window):
         for row in range(self.rows):
             for col in range(self.cols):
@@ -32,36 +32,38 @@ class Grid:
                 if particle is not None:
                     color = particle.color
                     pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, self.node_size, self.node_size))
-    
+    #funktioner som fjerner og tilføjer matterialer i gitteret
     def add_particle(self, row, col, particle_type):
         if 0 <= row < self.rows and 0 <= col < self.cols and self. is_node_empty(row, col):
             self.nodes[row][col] = particle_type()
-
+#funktion som fjerner partikler i gitteret
     def remove_particle(self, row, col):
         if 0 <= row < self.rows and 0 <= col < self.cols:
             self.nodes[row][col] = None
+#funktion som tjekker om en node er tom
     def is_node_empty(self, row, col):
         if 0 <= row < self.rows and 0 <= col < self.cols:
             if self.nodes[row][col] is None:
                 return True
         return False
-    
+#funktioner som sætter noder i gitteret
     def set_node(self, row, col, particle):
         if not(0 <= row < self.rows and 0 <= col < self.cols):
             return
         self.nodes[row][col] = particle
-   
+#funktion som henter noder i gitteret
     def get_node(self, row, col):
         if (0 <= row < self.rows and 0 <= col < self.cols):
             return self.nodes[row][col]
         return None
+#funktion som nulstiller gitteret
     def clear(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 self.remove_particle(row, col)
       
 
-
+# sand klasse som bruger en update funktion der tjekker om sandet kan bevæge sig enten ned, skråt
 class sand:
     def __init__(self):
         self.color = random_color((0.1, 0.12), (0.5, 0.7), (0.7, 0.9))
@@ -77,10 +79,11 @@ class sand:
                 if grid.is_node_empty(row + 1, new_col):
                     return row + 1, new_col
         return row, col
+# rock klassen som bare har en farve og ingen update funktion da den ikke skal bevæge sig
 class rock:
     def __init__(self):
         self.color = random_color((0, 0.1), (0.1, 0.3), (0.3, 0.5))
-
+#genere tilfældig farve i hsv
 def random_color(hue_range,saturation_range,value_range):
     hue = random.uniform(*hue_range)
     saturation = random.uniform(*saturation_range)
@@ -89,14 +92,14 @@ def random_color(hue_range,saturation_range,value_range):
     return int(r * 255), int(g * 255), int(b * 255)
 
 
-
+#simulations klasse som styrer programmet og opdatere og tegner pygame vinduet
 class Simulation:
     def __init__(self,width,height,node_size):
         self.grid = Grid(width, height, node_size)
         self.node_size = node_size
         self.mode="sand"
         self.brush_size=3
-
+#opdater alle noder i gitteret hver frame nedefra
     def update(self):
         for row in range(self.grid.rows-2, -1, -1):
             if row % 2 == 0:    
@@ -110,23 +113,24 @@ class Simulation:
                     if new_pos != (row, col):
                         self.grid.set_node(new_pos[0], new_pos[1], particle)
                         self.grid.remove_particle(row, col)
-
+#tegner gitteret
     def draw(self,window):
         self.grid.draw(window)
         self.draw_brush(window)
-
+#tilføjer partiklerne
     def add_particle(self, row, col):
         if self.mode=="sand":
             if random.random() < 0.15:
                 self.grid.add_particle(row, col, sand)
         elif self.mode=="rock":
            self.grid.add_particle(row, col, rock)   
-    
+# fjerner partikler
     def remove_particle(self, row, col):
         self.grid.remove_particle(row, col)
-
+#nulstiller gitteret
     def restart(self):
         self.grid.clear()
+#håndterer input fra tastatur og mus
     def handle_controls(self):
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
@@ -135,7 +139,7 @@ class Simulation:
             if event.type==pygame.KEYDOWN:
                 self.handle_key(event)
         self.handle_mouse()
-
+#håndterer input fra tastaturet
     def handle_key(self,event):
         if event.key == pygame.K_SPACE:
                 self.restart()
@@ -148,7 +152,7 @@ class Simulation:
         elif event.key == pygame.K_e:
                 print("eraser mode")
                 self.mode="eraser"
-
+#håndtere input fra mus
     def handle_mouse(self):
         buttons = pygame.mouse.get_pressed()
         if buttons[0]:
@@ -158,7 +162,7 @@ class Simulation:
 
             self.apply_brush(row, col)
 
-
+#tegner partikler
     def apply_brush(self, row, col):
         for r in range(self.brush_size):
             for c in range(self.brush_size):
@@ -168,6 +172,7 @@ class Simulation:
                     self.remove_particle(current_row, current_col)
                 else:
                     self.add_particle(current_row, current_col)
+#tegner en curser til brugeren i form af en firkant
     def draw_brush(self,window):
         mouse_pos = pygame.mouse.get_pos()
         row = mouse_pos[1] // self.node_size
@@ -183,15 +188,8 @@ class Simulation:
         elif self.mode == "rock":
             color = (128, 128, 128)
         pygame.draw.rect(window, color, (col * self.node_size, row * self.node_size, brush_visual_size, brush_visual_size))
-        
+#opretter simulationen
 simulation = Simulation(window_width, window_height, node_size)
-
-simulation.add_particle(0,0)
-simulation.add_particle(1,1)
-
-
-simulation.remove_particle(0,0)
-
 
 #main loop
 while True:
